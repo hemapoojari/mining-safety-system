@@ -57,9 +57,11 @@ TABLE_ORDER = [
 
 
 def normalize_postgres_url(url: str) -> str:
-    """Normalizes postgres:// to postgresql:// for SQLAlchemy compatibility."""
+    """Normalizes postgres:// and postgresql:// to postgresql+psycopg2://."""
     if url.startswith("postgres://"):
-        return url.replace("postgres://", "postgresql://", 1)
+        return url.replace("postgres://", "postgresql+psycopg2://", 1)
+    if url.startswith("postgresql://") and not url.startswith("postgresql+"):
+        return url.replace("postgresql://", "postgresql+psycopg2://", 1)
     return url
 
 
