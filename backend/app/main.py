@@ -43,7 +43,14 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables verified.")
 
-    # Run initial seed data if not present
+    # Auto-migrate from bundled SQLite to PostgreSQL if connected to empty cloud database (Neon)
+    try:
+        from backend.app.database.migrate_sqlite_to_postgres import auto_migrate_if_needed
+        auto_migrate_if_needed(engine)
+    except Exception as e:
+        logger.warning(f"Auto-migration check notice: {e}")
+
+    # Run initial seed data if not present (fallback)
     with SessionLocal() as db:
         seed_database(db)
 

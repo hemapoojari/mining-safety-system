@@ -9,9 +9,10 @@ pydantic>=2.9.0
 pydantic-settings>=2.5.0
 python-multipart>=0.0.12
 
-# Database & ORM (SQLite by default, ready for PostgreSQL via psycopg2-binary or asyncpg)
+# Database & ORM (SQLite by default, PostgreSQL/Neon ready via psycopg2-binary)
 sqlalchemy>=2.0.30
 alembic>=1.13.0
+psycopg2-binary>=2.9.9
 
 # Machine Learning & Scientific Computing
 numpy>=2.1.0

@@ -358,3 +358,87 @@ ALL TEST SUITES VERIFIED: 100% PASS RATE
 - **Simulated Telemetry**: Sensor values, worker GPS coordinates, and sub-surface beacons are synthetically generated for research demonstration.
 - **Atmospheric Modeling**: The simulation utilizes point-sensor empirical approximations rather than full 3D Computational Fluid Dynamics (CFD).
 - **Certification Disclaimer**: This software is an academic demonstration platform and is not certified under IEC 61508 / ISO 13849 for real-world life-critical mine safety operations.
+
+---
+
+## 12. Cloud Deployment Guide: Render.com & Neon Serverless PostgreSQL
+
+The application is architected for **100% Free Long-Term Hosting** with **NO fixed 30-day database expiration date**:
+- **Application Layer**: Render.com Free Web Service (serves FastAPI backend, compiled React 18 dashboard, REST APIs, and WebSockets on a single unified HTTPS URL).
+- **Persistence Layer**: Neon Serverless PostgreSQL Free Tier (0.5 GB persistent cloud storage, autoscales to zero when idle, automatic wake-up, no 30-day wipeout).
+
+```text
++-----------------------------------------------------------------------------------------+
+|                                    USER'S WEB BROWSER                                   |
+|                      https://mining-safety-system.onrender.com                         |
++--------------------------------------------+--------------------------------------------+
+                                             |  (Single HTTPS / WSS Origin)
+                                             v
++-----------------------------------------------------------------------------------------+
+|                               RENDER.COM FREE WEB SERVICE                               |
+|   +------------------------------------+  +-----------------------------------------+   |
+|   |   Compiled React 18 SPA (Vite)     |  |         FastAPI Unified Gateway         |   |
+|   |   [Dashboard] [Maps] [Simulation]  |  |  /api/...  |  /ws/telemetry  |  /assets |   |
+|   +------------------------------------+  +-----------------------------------------+   |
+|                                     |                                                   |
+|                        +------------+------------+                                      |
+|                        v                         v                                      |
+|              [4 Pre-Trained Models]    [Emergency Router]                               |
++--------------------------------------------+--------------------------------------------+
+                                             |  DATABASE_URL (SSL Encrypted Pool)
+                                             v
++-----------------------------------------------------------------------------------------+
+|                         NEON SERVERLESS POSTGRESQL (FREE TIER)                          |
+|         mining_zones | workers | sensors | sensor_readings | emergency_alerts           |
+|                 (Persistent Cloud Storage with Zero Expiry Date)                        |
++-----------------------------------------------------------------------------------------+
+```
+
+### Step 1: Create Free Neon Serverless PostgreSQL Database
+1. Go to **[neon.tech](https://neon.tech)** and sign up for a free account (GitHub / Google login, no credit card required).
+2. Click **Create Project**:
+   - **Project Name**: `mining-safety-system`
+   - **Region**: Choose closest to your Render service (e.g. `US East / Ohio` or `US East / N. Virginia`).
+   - Click **Create Project**.
+3. In your project dashboard, copy the connection string under **Connection Details**:
+   Select **Connection string** $\to$ choose **SQLAlchemy** or **PostgreSQL**:
+   ```text
+   postgresql://username:password@ep-cool-fog-123456.us-east-2.aws.neon.tech/neondb?sslmode=require
+   ```
+
+### Step 2: Push Repository to GitHub
+1. Create a new repository on **[github.com/new](https://github.com/new)** named `mining-safety-system` (Public or Private).
+2. Push your local workspace:
+   ```powershell
+   git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/mining-safety-system.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+### Step 3: Deploy on Render.com (Free Web Service)
+1. Go to **[dashboard.render.com](https://dashboard.render.com)** and sign in.
+2. Click **New +** $\to$ **Web Service**.
+3. Connect your GitHub repository `mining-safety-system`.
+4. Configure Web Service settings:
+   - **Name**: `mining-safety-system`
+   - **Region**: Oregon (US West) or Ohio (US East)
+   - **Branch**: `main`
+   - **Runtime**: **Python** (or **Docker**)
+   - **Build Command**: `bash build.sh`
+   - **Start Command**: `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
+   - **Instance Type**: **Free**
+5. Add **Environment Variables**:
+   | Variable | Value | Description |
+   | :--- | :--- | :--- |
+   | `DATABASE_URL` | `postgresql://...neon.tech/neondb?sslmode=require` | Your Neon connection string |
+   | `APP_ENV` | `production` | Production mode |
+   | `PYTHON_VERSION` | `3.11.9` | Optimized Python runtime |
+6. Click **Deploy Web Service**.
+
+### Step 4: Automatic Database Migration & Cold-Start Wakeup
+- On initial startup, the backend connects to Neon PostgreSQL. If the database is empty, the lifespan manager **automatically migrates all 2,752 historical sensor readings, 6 zones, 12 workers, 17 sensors, 136 alerts, and 266 evacuation records** from `mining_safety.db` into Neon!
+- **Free-Tier Sleep Behavior**:
+  - Render free services sleep after 15 minutes of inactivity; the first request takes ~30–50 seconds to spin up.
+  - Neon computes auto-suspend when inactive and wake up in $<500\,ms$ (handled seamlessly by SQLAlchemy `pool_pre_ping=True`).
+  - All new simulation ticks, emergency alerts, and worker acknowledgements persist permanently in Neon.
+

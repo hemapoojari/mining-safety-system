@@ -34,8 +34,8 @@ COPY --chown=user:user simulation/ ./simulation/
 COPY --chown=user:user frontend/dist/ ./frontend/dist/
 COPY --chown=user:user mining_safety.db ./mining_safety.db
 
-# Expose standard Hugging Face Spaces port
-EXPOSE 7860
+# Expose default application ports
+EXPOSE 10000 7860
 
-# Launch the unified FastAPI application
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+# Launch the unified FastAPI application using dynamic PORT assigned by host (e.g. Render / HF)
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

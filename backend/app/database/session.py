@@ -6,14 +6,31 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from backend.app.config import settings
 
-# SQLite requires check_same_thread=False for multithreaded FastAPI requests
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+# Normalize database URL (Render & cloud providers often output postgres:// instead of postgresql://)
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args=connect_args,
-    echo=settings.DEBUG,
-)
+# Configure connection arguments and connection pool parameters
+if db_url.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+    engine = create_engine(
+        db_url,
+        connect_args=connect_args,
+        echo=settings.DEBUG,
+    )
+else:
+    # PostgreSQL / Neon Serverless configuration:
+    # pool_pre_ping=True handles Neon automatic compute suspension/wake-up transparently
+    # pool_recycle=300 recycles connections every 5 minutes to prevent stale socket errors
+    engine = create_engine(
+        db_url,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=10,
+        max_overflow=20,
+        echo=settings.DEBUG,
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
