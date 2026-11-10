@@ -139,12 +139,13 @@ def health_check():
             from sqlalchemy import text
             conn.execute(text("SELECT 1"))
     except Exception as e:
-        db_status = f"unhealthy: {e}"
+        logger.error(f"Database health check failed: {type(e).__name__}")
+        db_status = "disconnected"
 
     return {
         "status": "healthy" if db_status == "connected" else "degraded",
         "database": db_status,
-        "database_backend": settings.DATABASE_URL.split("://")[0],
+        "database_backend": "postgresql" if "postgres" in settings.DATABASE_URL else "sqlite",
         "simulation_enabled": settings.ENABLE_SYNTHETIC_GENERATOR,
     }
 

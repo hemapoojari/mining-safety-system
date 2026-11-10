@@ -3,6 +3,9 @@ System Configuration & Environment Settings
 Supports SQLite for rapid local prototyping and PostgreSQL for production migration.
 """
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 from pydantic_settings import BaseSettings
 
 

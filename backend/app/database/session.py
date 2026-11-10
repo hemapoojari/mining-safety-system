@@ -23,8 +23,13 @@ else:
     # PostgreSQL / Neon Serverless configuration:
     # pool_pre_ping=True handles Neon automatic compute suspension/wake-up transparently
     # pool_recycle=300 recycles connections every 5 minutes to prevent stale socket errors
+    pg_connect_args = {}
+    if "sslmode" not in db_url:
+        pg_connect_args["sslmode"] = "require"
+
     engine = create_engine(
         db_url,
+        connect_args=pg_connect_args,
         pool_pre_ping=True,
         pool_recycle=300,
         pool_size=10,

@@ -251,13 +251,18 @@ def migrate_database(
     return stats
 
 
-def auto_migrate_if_needed(target_engine, sqlite_path: str = DEFAULT_SQLITE_PATH):
+def auto_migrate_if_needed(target_engine, sqlite_path: str = DEFAULT_SQLITE_PATH, target_url: str = None):
     """
     Invoked during FastAPI startup lifecycle.
     If target database is PostgreSQL and has 0 mining zones, automatically
     migrates all historical records from the bundled SQLite database.
     """
     try:
+        from backend.app.config import settings
+        url_to_use = target_url or settings.DATABASE_URL
+        if not url_to_use.startswith("postgres"):
+            return  # SQLite doesn't need auto-migration
+
         with target_engine.connect() as conn:
             # Check if mining_zones table exists and count
             try:
@@ -266,12 +271,12 @@ def auto_migrate_if_needed(target_engine, sqlite_path: str = DEFAULT_SQLITE_PATH
                 count = 0
 
             if count == 0 and os.path.exists(sqlite_path):
-                logger.info("PostgreSQL database is empty. Triggering automatic one-time historical seed from SQLite...")
-                migrate_database(str(target_engine.url), sqlite_path=sqlite_path)
+                logger.info("PostgreSQL / Neon database is empty. Triggering automatic historical migration from SQLite...")
+                migrate_database(url_to_use, sqlite_path=sqlite_path)
             else:
                 logger.info(f"Target database already contains {count} mining zones. Skipping auto-migration.")
     except Exception as e:
-        logger.warning(f"Auto-migration check notice: {e}")
+        logger.warning(f"Auto-migration check notice: {type(e).__name__}")
 
 
 if __name__ == "__main__":
