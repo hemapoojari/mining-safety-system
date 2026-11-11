@@ -1,3 +1,4 @@
+HEAD
 ---
 title: AI Mining Safety And Worker Evacuation System
 emoji: 🦺
@@ -442,3 +443,6 @@ The application is architected for **100% Free Long-Term Hosting** with **NO fix
   - Neon computes auto-suspend when inactive and wake up in $<500\,ms$ (handled seamlessly by SQLAlchemy `pool_pre_ping=True`).
   - All new simulation ticks, emergency alerts, and worker acknowledgements persist permanently in Neon.
 
+
+# mining-safety-system
+d08fe90730b6a10c671bd6a65abd43f225dbf318
